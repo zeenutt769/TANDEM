@@ -29,44 +29,46 @@
 ## ✨ Features
 
 - 🔴 **Live Collaboration** — Multiple users editing the same file simultaneously
-- ⚙️ **Operational Transformation (OT)** — Conflict-free concurrent edits with no data loss
-- 🖱️ **Live Cursors** — See exactly where your teammates are typing, in real-time
+- 🧬 **CRDT Sync (Yjs)** — Conflict-free concurrent edits, same tech as Figma & Notion
+- 🖱️ **Live Cursors & Selections** — See exactly where your teammates are typing with colored cursors
 - 🌐 **Multi-language Support** — JavaScript, Python, C++, Java, Go, Rust, TypeScript, C
-- 🏃 **Code Execution** — Run code directly in the browser via Judge0 API
+- 🏃 **Code Execution** — Run code directly in the browser via JDoodle API (free, no card needed)
+- ✨ **Auto-formatting** — One-click format code + auto-closing brackets, smart indent
 - 🔗 **Shareable Rooms** — 6-char Room ID — one link to invite your whole team
 - 🎨 **Monaco Editor** — Same engine as VS Code
 
 ---
 
-## 🧠 How It Works — OT Algorithm
+## 🧠 How It Works — CRDT (Yjs)
 
 **The Problem:** Two users type at the same time. Without synchronization, their edits collide and corrupt the document.
 
-**The Solution — Operational Transformation:**
+**The Solution — CRDT (Conflict-free Replicated Data Types) via Yjs:**
 
 ```
-Client A (types " World" at pos 5)          Client B (deletes "H" at pos 0)
-        │                                            │
-        └──────────────► OT Server ◄────────────────┘
-                              │
-                    transform(opA, opB)
-                    transform(opB, opA)
-                              │
-                    Broadcasts corrected ops
-                              │
-             ┌────────────────┴────────────────┐
-             ▼                                 ▼
-      Client A sees:                    Client B sees:
-       "ello World"                      "ello World"
-             ✓ Consistent ✓
+Client A (types "Hello")       Client B (types "World")
+        │                               │
+        │    Y.Doc (shared state)        │
+        └──────────► Yjs ◄─────────────┘
+                       │
+           Mathematical merge (no conflict possible)
+                       │
+        ┌──────────────┴──────────────┐
+        ▼                             ▼
+  Client A sees:               Client B sees:
+   "HelloWorld"                  "HelloWorld"
+        ✓ Always Consistent ✓   (even offline!)
 ```
 
-**3-line summary:**
-1. Every edit becomes an **Operation** `{ type: 'insert'|'delete', pos, text }`
-2. The server **transforms** concurrent operations against each other before applying
-3. All clients end up with the **same document** regardless of network delay
+**Why CRDT > OT for coding:**
+1. **No central server needed** to resolve conflicts — math does it automatically
+2. **Works offline** — edits sync when connection restores, zero data loss
+3. **Character-level precision** — a single comma or bracket is never lost
+4. **Live cursors + selections** built-in via Yjs Awareness protocol
 
-> 📖 Deep dive: [Operational Transformation — Wikipedia](https://en.wikipedia.org/wiki/Operational_transformation) | [Google Wave OT Paper](https://svn.apache.org/repos/asf/incubator/wave/whitepapers/operational-transform/operational-transform.html)
+> 📖 Deep dive: [Yjs Documentation](https://docs.yjs.dev) | [CRDT — Wikipedia](https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type) | [How Figma uses CRDTs](https://www.figma.com/blog/how-figmas-multiplayer-technology-works/)
+
+> 💡 **Note:** We originally built this with OT (like Google Docs), then upgraded to CRDT (like Figma/Notion) for better performance and offline support.
 
 ---
 
@@ -76,9 +78,9 @@ Client A (types " World" at pos 5)          Client B (deletes "H" at pos 0)
 |---|---|---|
 | Frontend | React 18 + Vite | Fast HMR, modern tooling |
 | Editor | Monaco Editor | Same engine as VS Code |
-| Real-time | Socket.io | WebSocket with auto-fallback |
-| Sync Logic | Custom OT Algorithm | Conflict-free concurrent edits |
-| Execution | Judge0 API | Sandboxed multi-language runner |
+| Real-time | Socket.io + WebSocket (ws) | Room mgmt + Yjs CRDT sync |
+| Sync Logic | **Yjs CRDT** | Conflict-free, offline-capable, same as Figma |
+| Execution | JDoodle API (backend proxy) | Free, no card needed, keys stay server-side |
 | Backend | Node.js + Express | Lightweight, non-blocking I/O |
 | State | In-memory Map (Redis-ready) | Fast room state, Redis for scale |
 
@@ -90,21 +92,22 @@ Client A (types " World" at pos 5)          Client B (deletes "H" at pos 0)
 TANDEM/
 ├── client/                   # React Frontend (Vite)
 │   └── src/
-│       ├── components/       # Editor, Toolbar, UserList, RoomJoin...
-│       ├── hooks/            # useSocket, useCollaboration, useCodeRunner
-│       ├── utils/            # otClient.js, colors.js, roomUtils.js
-│       └── constants/        # languages.js (Judge0 IDs)
+│       ├── components/       # Editor (Yjs), Toolbar, UserList, RoomJoin, OutputPanel
+│       ├── hooks/            # useSocket, useCodeRunner
+│       ├── utils/            # colors.js, roomUtils.js
+│       └── constants/        # languages.js (JDoodle + Judge0 + Piston configs)
 │
 ├── server/                   # Node.js Backend
 │   └── src/
 │       ├── handlers/         # roomHandler, editorHandler, cursorHandler
-│       ├── ot/               # OT engine — otServer.js, operations.js
 │       ├── store/            # roomStore.js (in-memory, Redis-replaceable)
 │       └── middleware/       # rateLimiter.js
+│       └── index.js          # Express + Socket.io + Yjs WebSocket server
 │
 ├── shared/
 │   └── constants.js          # Socket event names — DRY, used by both sides
 │
+├── DEVLOG.md                 # Day-by-day dev log — decisions, bugs, fixes
 └── docker-compose.yml        # Local Redis setup
 ```
 
@@ -138,16 +141,19 @@ cp server/.env.example server/.env
 ```env
 # client/.env
 VITE_SERVER_URL=http://localhost:3001
-VITE_JUDGE0_API_URL=https://judge0-ce.p.rapidapi.com
-VITE_JUDGE0_API_KEY=your_rapidapi_key_here
 
 # server/.env
 PORT=3001
 CLIENT_URL=http://localhost:5173
+EXECUTION_ENGINE=jdoodle
+JDOODLE_CLIENT_ID=your_jdoodle_client_id
+JDOODLE_CLIENT_SECRET=your_jdoodle_client_secret
 REDIS_URL=redis://localhost:6379   # Optional — only if using Docker
 ```
 
-> 🔑 Get your free Judge0 API key at [RapidAPI](https://rapidapi.com/judge0-official/api/judge0-ce)
+> 🔑 Get your **free** JDoodle API credentials at [jdoodle.com/compiler-api](https://www.jdoodle.com/compiler-api) — no credit card needed!
+
+> 💡 **Want to use Judge0 instead?** Set `EXECUTION_ENGINE=judge0` and add `JUDGE0_API_KEY` in `server/.env`. Judge0 key available at [RapidAPI](https://rapidapi.com/judge0-official/api/judge0-ce).
 
 ### Running in Development
 
@@ -185,7 +191,7 @@ vercel --prod
 
 Set these environment variables in your Vercel dashboard:
 - `VITE_SERVER_URL` → your Railway backend URL
-- `VITE_JUDGE0_API_KEY` → your RapidAPI key
+- `VITE_PISTON_API_URL` → (Optional) Your own Piston instance URL if you prefer not to use the public one.
 
 ### Backend → Railway
 
@@ -202,16 +208,19 @@ Set these environment variables in your Vercel dashboard:
 
 ## 🔮 Roadmap
 
-- [x] Real-time code sync via OT
-- [x] Live cursor positions
-- [x] Multi-language code execution (Judge0)
-- [x] Shareable room links
+- [x] Real-time code sync — upgraded from OT → **Yjs CRDT** (Figma-level sync)
+- [x] Live cursor positions + colored selections via Yjs Awareness
+- [x] Multi-language code execution (JDoodle API — free, no card!)
+- [x] Shareable room links (6-char Room ID)
+- [x] Auto-formatting + precision coding (auto-close brackets, smart indent)
+- [x] Backend API proxy for secure execution key management
 - [ ] 🎙️ Voice chat integration (WebRTC)
 - [ ] 🌿 Git integration — commit directly from editor
 - [ ] 📁 File tree support — multi-file collaboration
 - [ ] 💾 Persistent rooms with database storage
 - [ ] 🔒 Password-protected rooms
 - [ ] 📝 Markdown preview panel
+- [ ] 🚀 Deploy — Vercel (frontend) + Railway (backend)
 
 ---
 

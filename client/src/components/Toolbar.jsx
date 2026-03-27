@@ -2,9 +2,9 @@ import React from 'react';
 import { LANGUAGES } from '../constants/languages.js';
 
 /**
- * Toolbar.jsx — Language selector, Run button, room info
+ * Toolbar.jsx — Language selector, Run, Format buttons, room info
  */
-function Toolbar({ language, onLanguageChange, onRun, isRunning, roomId, connected }) {
+function Toolbar({ language, onLanguageChange, onRun, onFormat, isRunning, roomId, connected }) {
   const handleCopyRoomId = () => {
     navigator.clipboard.writeText(roomId);
   };
@@ -29,6 +29,15 @@ function Toolbar({ language, onLanguageChange, onRun, isRunning, roomId, connect
             </option>
           ))}
         </select>
+
+        <button
+          id="format-code-btn"
+          className="format-btn"
+          onClick={onFormat}
+          title="Auto-format code (Shift+Alt+F)"
+        >
+          ✨ Format
+        </button>
 
         <button
           id="run-code-btn"
@@ -56,3 +65,4 @@ function Toolbar({ language, onLanguageChange, onRun, isRunning, roomId, connect
 }
 
 export default Toolbar;
+

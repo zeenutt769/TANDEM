@@ -1,22 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import RoomJoin from './components/RoomJoin.jsx';
 import Editor from './components/Editor.jsx';
 import Toolbar from './components/Toolbar.jsx';
 import UserList from './components/UserList.jsx';
-import UserCursors from './components/UserCursors.jsx';
 import OutputPanel from './components/OutputPanel.jsx';
 import { useSocket } from './hooks/useSocket.js';
-import { useCollaboration } from './hooks/useCollaboration.js';
 import { useCodeRunner } from './hooks/useCodeRunner.js';
 
 function App() {
   const [roomId, setRoomId] = useState(null);
   const [username, setUsername] = useState(null);
   const [language, setLanguage] = useState('javascript');
+  const [code, setCode] = useState('// Start coding together...\n');
 
   const { socket, users, connected } = useSocket(roomId, username);
-  const { code, setCode, remoteCursors } = useCollaboration(socket, roomId);
   const { output, isRunning, runCode } = useCodeRunner();
+  const editorRef = useRef(null);
+
+  const handleFormat = () => editorRef.current?.formatCode();
 
   const handleJoinRoom = ({ roomId, username }) => {
     setRoomId(roomId);
@@ -37,6 +38,7 @@ function App() {
         language={language}
         onLanguageChange={setLanguage}
         onRun={handleRunCode}
+        onFormat={handleFormat}
         isRunning={isRunning}
         roomId={roomId}
         connected={connected}
@@ -45,12 +47,12 @@ function App() {
         <UserList users={users} currentUser={username} />
         <div className="editor-wrapper">
           <Editor
-            code={code}
-            onChange={setCode}
+            ref={editorRef}
+            roomId={roomId}
+            username={username}
             language={language}
-            socket={socket}
+            onChange={setCode}
           />
-          <UserCursors cursors={remoteCursors} />
         </div>
         <OutputPanel output={output} isRunning={isRunning} />
       </div>

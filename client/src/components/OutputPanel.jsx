@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 
 /**
- * OutputPanel.jsx — Displays code execution output from Judge0
+ * OutputPanel.jsx — Displays code execution output from Piston API
  */
 function OutputPanel({ output, isRunning }) {
   const outputRef = useRef(null);

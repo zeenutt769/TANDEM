@@ -139,6 +139,26 @@ body {
 .run-btn:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
 .run-btn:disabled, .run-btn.running { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+.format-btn {
+  background: var(--bg-tertiary);
+  color: var(--accent);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.format-btn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
 .toolbar-right {
   display: flex;
   align-items: center;
@@ -499,3 +519,34 @@ body {
 ::-webkit-scrollbar-track  { background: var(--bg-primary); }
 ::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+/* ─── Yjs CRDT Cursor & Selection Styles ─────────────────────────────────── */
+.yRemoteSelection {
+  background-color: rgba(250, 129, 0, 0.35);
+}
+
+.yRemoteSelectionHead {
+  position: absolute;
+  border-left: 2px solid orange;
+  border-top: 2px solid orange;
+  border-bottom: 2px solid orange;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.yRemoteSelectionHead::after {
+  position: absolute;
+  content: attr(user-info);
+  font-size: 10px;
+  font-family: sans-serif;
+  font-weight: bold;
+  padding: 2px 4px;
+  color: white;
+  border-radius: 4px;
+  background-color: orange;
+  top: -18px;
+  left: -2px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
