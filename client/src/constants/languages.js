@@ -8,7 +8,7 @@
 export const LANGUAGES = [
   {
     id: 'javascript',
-    label: '🟨 JavaScript',
+    label: 'JavaScript',
     pistonLang: 'javascript',
     pistonVersion: '18.15.0',
     judge0Id: 63,
@@ -19,7 +19,7 @@ export const LANGUAGES = [
   },
   {
     id: 'python',
-    label: '🐍 Python',
+    label: 'Python',
     pistonLang: 'python',
     pistonVersion: '3.10.0',
     judge0Id: 71,
@@ -30,7 +30,7 @@ export const LANGUAGES = [
   },
   {
     id: 'cpp',
-    label: '⚡ C++',
+    label: 'C++',
     pistonLang: 'c++',
     pistonVersion: '10.2.0',
     judge0Id: 54,
@@ -41,7 +41,7 @@ export const LANGUAGES = [
   },
   {
     id: 'java',
-    label: '☕ Java',
+    label: 'Java',
     pistonLang: 'java',
     pistonVersion: '15.0.2',
     judge0Id: 62,
@@ -52,7 +52,7 @@ export const LANGUAGES = [
   },
   {
     id: 'typescript',
-    label: '🔷 TypeScript',
+    label: 'TypeScript',
     pistonLang: 'typescript',
     pistonVersion: '5.0.3',
     judge0Id: 74,
@@ -63,7 +63,7 @@ export const LANGUAGES = [
   },
   {
     id: 'go',
-    label: '🐹 Go',
+    label: 'Go',
     pistonLang: 'go',
     pistonVersion: '1.16.2',
     judge0Id: 60,
@@ -74,7 +74,7 @@ export const LANGUAGES = [
   },
   {
     id: 'rust',
-    label: '🦀 Rust',
+    label: 'Rust',
     pistonLang: 'rust',
     pistonVersion: '1.68.2',
     judge0Id: 73,
@@ -85,7 +85,7 @@ export const LANGUAGES = [
   },
   {
     id: 'c',
-    label: '🔵 C',
+    label: 'C',
     pistonLang: 'c',
     pistonVersion: '10.2.0',
     judge0Id: 50,

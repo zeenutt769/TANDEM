@@ -19,6 +19,9 @@ export const SOCKET_EVENTS = {
   ROOM_USERS: 'room:users',    // Server → Client: user list update
   USER_LEFT: 'room:user_left', // Server → Client: someone disconnected
 
+  // Chat
+  CHAT_MESSAGE: 'chat:message', // Client ↔ Server: chat messages including code snippets
+
   // Code synchronization
   CODE_CHANGE: 'code:change',  // Client → Server: local code change
   CODE_UPDATE: 'code:update',  // Server → Client: broadcast code change

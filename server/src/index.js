@@ -7,8 +7,11 @@ import { rateLimiter } from './middleware/rateLimiter.js';
 import { registerRoomHandler } from './handlers/roomHandler.js';
 import { registerEditorHandler } from './handlers/editorHandler.js';
 import { registerCursorHandler } from './handlers/cursorHandler.js';
+import { registerChatHandler } from './handlers/chatHandler.js';
 import { WebSocketServer } from 'ws';
 import yWsUtils from 'y-websocket/bin/utils';
+import { initDB } from './db/schema.js';
+import { getRoom, upsertRoom } from './db/roomQueries.js';
 const { setupWSConnection } = yWsUtils;
 
 dotenv.config();
@@ -18,12 +21,55 @@ const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 // ─── Express App ──────────────────────────────────────────────────────────────
 const app = express();
-app.use(cors({ origin: CLIENT_URL }));
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 app.use(rateLimiter);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ─── Room Persistence Routes ──────────────────────────────────────────────────
+
+/**
+ * GET /rooms/:roomId
+ * Called once when a user joins a room — loads the last saved code + language.
+ * Returns 404 with defaults if room has never been persisted.
+ */
+app.get('/rooms/:roomId', async (req, res) => {
+  try {
+    const room = await getRoom(req.params.roomId);
+    if (!room) {
+      // First time anyone opens this room — return clean defaults
+      return res.json({ code: '// Start coding together...\n', language: 'javascript' });
+    }
+    res.json({ code: room.code, language: room.language });
+  } catch (err) {
+    console.error('[DB] GET /rooms error:', err.message);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+/**
+ * PATCH /rooms/:roomId
+ * Called by the debounced frontend hook after 1.5 s of typing inactivity.
+ * Body: { code: string, language: string }
+ */
+app.patch('/rooms/:roomId', async (req, res) => {
+  const { roomId } = req.params;
+  const { code, language } = req.body;
+
+  if (typeof code !== 'string' || typeof language !== 'string') {
+    return res.status(400).json({ error: 'code and language are required strings' });
+  }
+
+  try {
+    await upsertRoom(roomId, code, language);
+    res.json({ saved: true });
+  } catch (err) {
+    console.error('[DB] PATCH /rooms error:', err.message);
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 app.post('/execute', async (req, res) => {
@@ -109,7 +155,7 @@ httpServer.on('upgrade', (request, socket, head) => {
 
 const io = new Server(httpServer, {
   cors: {
-    origin: CLIENT_URL,
+    origin: '*',
     methods: ['GET', 'POST'],
   },
   transports: ['websocket', 'polling'],
@@ -122,6 +168,7 @@ io.on('connection', (socket) => {
   registerRoomHandler(io, socket);
   registerEditorHandler(io, socket);
   registerCursorHandler(io, socket);
+  registerChatHandler(io, socket);
 
   socket.on('disconnect', () => {
     console.log(`[-] Client disconnected: ${socket.id}`);
@@ -129,6 +176,15 @@ io.on('connection', (socket) => {
 });
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
-httpServer.listen(PORT, () => {
-  console.log(`🚀 TANDEM Server running on http://localhost:${PORT}`);
-});
+// Boot DB first, then open the HTTP port
+initDB()
+  .then(() => {
+    httpServer.listen(PORT, () => {
+      console.log(`🚀 TANDEM Server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('[DB] Failed to initialise database:', err.message);
+    console.error('     Make sure DATABASE_URL is set in server/.env');
+    process.exit(1);
+  });

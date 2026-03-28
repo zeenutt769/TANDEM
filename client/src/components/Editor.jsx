@@ -18,13 +18,32 @@ const Editor = forwardRef(function Editor({ roomId, username, language, onChange
   const providerRef = useRef(null);
   const ydocRef = useRef(null);
 
-  // Expose formatCode() so Toolbar/App can call it via ref
+  // Expose methods so Toolbar/App can call them via ref
   useImperativeHandle(ref, () => ({
     formatCode: () => {
       editorRef.current
         ?.getAction('editor.action.formatDocument')
         ?.run();
     },
+    insertSnippetAtCursor: (snippetText) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      
+      const position = editor.getPosition();
+      editor.executeEdits('chat-snippet', [
+        {
+          range: {
+            startLineNumber: position.lineNumber,
+            startColumn: position.column,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          },
+          text: snippetText + '\n',
+          forceMoveMarkers: true,
+        }
+      ]);
+      editor.focus();
+    }
   }));
 
   useEffect(() => {
@@ -67,12 +86,40 @@ const Editor = forwardRef(function Editor({ roomId, username, language, onChange
     ytext.observe(() => onChange(ytext.toString()));
   };
 
+  const handleEditorWillMount = (monaco) => {
+    monaco.editor.defineTheme('tandem-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { background: '0a0a0a' },
+        { token: 'comment', foreground: '64748b', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'c4b5fd' }, // sleek purple
+        { token: 'string', foreground: '86efac' },  // sleek green
+        { token: 'function', foreground: '93c5fd' },// sleek blue
+      ],
+      colors: {
+        'editor.background': '#0a0a0a', // Deep black matches layout
+        'editor.lineHighlightBackground': '#111111',
+        'editorLineNumber.foreground': '#333333',
+        'editorLineNumber.activeForeground': '#7e22ce',
+        'editorIndentGuide.background': '#222222',
+        'editorWidget.background': '#111111',
+        'editorWidget.border': '#333333',
+        'editorSuggestWidget.background': '#0a0a0a',
+        'editorSuggestWidget.border': '#333333',
+        'editorSuggestWidget.highlightForeground': '#c4b5fd',
+        'editorSuggestWidget.selectedBackground': '#222222',
+      }
+    });
+  };
+
   return (
     <MonacoEditor
       height="100%"
       language={language}
+      beforeMount={handleEditorWillMount}
       onMount={handleEditorDidMount}
-      theme="vs-dark"
+      theme="tandem-dark"
       options={{
         fontSize: 14,
         fontFamily: "'JetBrains Mono', 'Fira Code', monospace",

@@ -30,12 +30,15 @@
 
 - 🔴 **Live Collaboration** — Multiple users editing the same file simultaneously
 - 🧬 **CRDT Sync (Yjs)** — Conflict-free concurrent edits, same tech as Figma & Notion
+- 🗄️ **Persistent Code Sync** — Powered by Neon Serverless PostgreSQL for immediate room resume
+- 🎨 **Dynamic Resizable Layout** — Slide your terminal, expand your chat (VS Code aesthetic)
+- 💬 **Live Context-Aware Chat** — Dedicated chat panel for seamless team communication
 - 🖱️ **Live Cursors & Selections** — See exactly where your teammates are typing with colored cursors
 - 🌐 **Multi-language Support** — JavaScript, Python, C++, Java, Go, Rust, TypeScript, C
-- 🏃 **Code Execution** — Run code directly in the browser via JDoodle API (free, no card needed)
+- 🏃 **Code Execution** — Run code directly in the browser via backend JDoodle API
 - ✨ **Auto-formatting** — One-click format code + auto-closing brackets, smart indent
-- 🔗 **Shareable Rooms** — 6-char Room ID — one link to invite your whole team
-- 🎨 **Monaco Editor** — Same engine as VS Code
+- 🔗 **Shareable Rooms** — 6-char Room code — one link to invite your whole team
+- 🎨 **Monaco Editor** — Same robust engine as VS Code
 
 ---
 
@@ -76,13 +79,14 @@ Client A (types "Hello")       Client B (types "World")
 
 | Layer | Technology | Why |
 |---|---|---|
-| Frontend | React 18 + Vite | Fast HMR, modern tooling |
-| Editor | Monaco Editor | Same engine as VS Code |
-| Real-time | Socket.io + WebSocket (ws) | Room mgmt + Yjs CRDT sync |
-| Sync Logic | **Yjs CRDT** | Conflict-free, offline-capable, same as Figma |
-| Execution | JDoodle API (backend proxy) | Free, no card needed, keys stay server-side |
-| Backend | Node.js + Express | Lightweight, non-blocking I/O |
-| State | In-memory Map (Redis-ready) | Fast room state, Redis for scale |
+| Frontend | React 18 + Vite | Fast HMR, component-based UI without heavy SSR overhead |
+| UI/UX | Framer Motion + Resizable Panels | Beautiful fade-ins and dynamic sliding layouts |
+| Editor | Monaco Editor | Exact VS Code editing experience (IntelliSense natively) |
+| Real-time | Socket.io + WebSocket (ws) | Low-latency bi-directional comms, robust event acks |
+| Sync Logic | **Yjs CRDT** | Deterministic code merging, no server-side arbitration matrix |
+| Execution | JDoodle Proxy | Backend proxy routes untrusted code securely |
+| Backend | Node.js + Express | Lightweight, non-blocking middleware |
+| Database | **PostgreSQL (Neon)** | Serverless DB for room persistence, snippets & stats |
 
 ---
 
@@ -210,16 +214,15 @@ Set these environment variables in your Vercel dashboard:
 
 - [x] Real-time code sync — upgraded from OT → **Yjs CRDT** (Figma-level sync)
 - [x] Live cursor positions + colored selections via Yjs Awareness
-- [x] Multi-language code execution (JDoodle API — free, no card!)
-- [x] Shareable room links (6-char Room ID)
-- [x] Auto-formatting + precision coding (auto-close brackets, smart indent)
-- [x] Backend API proxy for secure execution key management
+- [x] Multi-language code execution proxy (JDoodle)
+- [x] Shareable room links & persistent chat panel
+- [x] Neon Serverless Postgres integration for Room states
+- [x] Dynamic Drag-to-Resize Layout mirroring standard IDEs
+- [x] Beautiful Landing Page with Framer Motion animations
 - [ ] 🎙️ Voice chat integration (WebRTC)
 - [ ] 🌿 Git integration — commit directly from editor
 - [ ] 📁 File tree support — multi-file collaboration
-- [ ] 💾 Persistent rooms with database storage
 - [ ] 🔒 Password-protected rooms
-- [ ] 📝 Markdown preview panel
 - [ ] 🚀 Deploy — Vercel (frontend) + Railway (backend)
 
 ---

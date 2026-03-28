@@ -1,6 +1,24 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tandem-postgres
+    environment:
+      POSTGRES_DB: tandem
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: tandem_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tandem"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   redis:
     image: redis:7-alpine
     container_name: tandem-redis
@@ -11,4 +29,5 @@ services:
     restart: unless-stopped
 
 volumes:
+  postgres_data:
   redis_data:
