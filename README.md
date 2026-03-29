@@ -14,13 +14,7 @@
 
 ---
 
-## 📸 Demo
 
-> ⚠️ *Add a GIF here — record with [ScreenToGif](https://www.screentogif.com/) after running the project*
-
-```
-[demo.gif goes here — shows two browser windows editing the same file in real-time]
-```
 
 *Tip: Open two browser tabs → same Room ID → type in one → watch it appear in the other instantly.*
 
