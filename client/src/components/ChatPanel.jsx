@@ -66,12 +66,16 @@ export default function ChatPanel({ socket, username, onApplySnippet }) {
                     </div>
                     <pre style={{ margin: 0, padding: '12px', fontSize: '12px', color: '#c4b5fd', fontFamily: 'monospace', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>{msg.text}</pre>
                     <button 
-                      onClick={() => onApplySnippet(msg.text)}
+                      onClick={() => {
+                        if (socket) {
+                          socket.emit('snippet:request-apply', { sender: username, snippet: msg.text });
+                        }
+                      }}
                       style={{ display: 'block', width: '100%', padding: '8px', background: 'rgba(126, 34, 206, 0.1)', color: '#c4b5fd', border: 'none', borderTop: '1px solid #333', fontSize: '11px', fontWeight: '600', cursor: 'pointer', transition: '0.2s' }}
                       onMouseEnter={(e) => e.target.style.background = 'rgba(126, 34, 206, 0.2)'}
                       onMouseLeave={(e) => e.target.style.background = 'rgba(126, 34, 206, 0.1)'}
                     >
-                      APPLY TO EDITOR →
+                      REQUEST TO APPLY →
                     </button>
                   </div>
                 ) : (

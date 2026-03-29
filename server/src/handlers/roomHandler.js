@@ -29,7 +29,11 @@ export function registerRoomHandler(io, socket) {
     const users = Array.from(room.users.values());
     io.to(roomId).emit(SOCKET_EVENTS.ROOM_USERS, users);
 
-    console.log(`[Room] ${username} (${socket.id}) joined room ${roomId}`);
+    console.log(`[+] [Room] ${username} (${socket.id}) joined room ${roomId}`);
+  });
+
+  socket.on('terminal:scroll', ({ roomId, scrollTop }) => {
+    socket.to(roomId).emit('terminal:scroll', scrollTop);
   });
 
   socket.on(SOCKET_EVENTS.LEAVE_ROOM, ({ roomId }) => {

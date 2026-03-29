@@ -27,7 +27,9 @@
 - 🗄️ **Persistent Code Sync** — Powered by Neon Serverless PostgreSQL for immediate room resume
 - 🎨 **Dynamic Resizable Layout** — Slide your terminal, expand your chat (VS Code aesthetic)
 - 💬 **Live Context-Aware Chat** — Dedicated chat panel for seamless team communication
-- 🖱️ **Live Cursors & Selections** — See exactly where your teammates are typing with colored cursors
+- 🛡️ **Chat Snippet Approval System** — Request workspace permission before injecting code snippets (Antigravity-style)
+- 🖱️ **Live Cursors & Named Labels** — Google Docs-style cursors showing exactly who is typing and where
+- 🎯 **Shared Terminal Focus (Sync-Scroll)** — Keep your team on the same line with auto-synchronized output terminals
 - 🌐 **Multi-language Support** — JavaScript, Python, C++, Java, Go, Rust, TypeScript, C
 - 🏃 **Code Execution** — Run code directly in the browser via backend JDoodle API
 - ✨ **Auto-formatting** — One-click format code + auto-closing brackets, smart indent

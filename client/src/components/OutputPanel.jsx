@@ -1,6 +1,33 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 
-export default function OutputPanel({ output, isRunning }) {
+export default function OutputPanel({ output, isRunning, socket, roomId }) {
+  const scrollRef = useRef(null);
+  const isSyncing = useRef(false);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleRemoteScroll = (scrollTop) => {
+      if (scrollRef.current) {
+        isSyncing.current = true;
+        scrollRef.current.scrollTo({ top: scrollTop, behavior: 'smooth' });
+
+        clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => {
+          isSyncing.current = false;
+        }, 400); // Allow time for smooth scroll to finish without re-emitting
+      }
+    };
+
+    socket.on('terminal:scroll', handleRemoteScroll);
+    return () => socket.off('terminal:scroll', handleRemoteScroll);
+  }, [socket]);
+
+  const handleScroll = (e) => {
+    if (isSyncing.current || !socket || !roomId) return;
+    socket.emit('terminal:scroll', { roomId, scrollTop: e.target.scrollTop });
+  };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', background: '#000', borderTop: '1px solid #222', fontFamily: '"Inter", sans-serif' }}>
       
@@ -16,7 +43,11 @@ export default function OutputPanel({ output, isRunning }) {
         )}
       </div>
 
-      <div style={{ flex: 1, padding: '16px', overflowY: 'auto', background: '#000' }}>
+      <div 
+        ref={scrollRef}
+        onScroll={handleScroll}
+        style={{ flex: 1, padding: '16px', overflowY: 'auto', background: '#000' }}
+      >
         {output ? (
           <pre style={{ margin: 0, fontSize: '13px', color: '#e2e8f0', fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: '1.5' }}>
             {output}

@@ -17,6 +17,7 @@ const Editor = forwardRef(function Editor({ roomId, username, language, onChange
   const bindingRef = useRef(null);
   const providerRef = useRef(null);
   const ydocRef = useRef(null);
+  const styleRef = useRef(null);
 
   // Expose methods so Toolbar/App can call them via ref
   useImperativeHandle(ref, () => ({
@@ -51,6 +52,9 @@ const Editor = forwardRef(function Editor({ roomId, username, language, onChange
       providerRef.current?.destroy();
       bindingRef.current?.destroy();
       ydocRef.current?.destroy();
+      if (styleRef.current) {
+        styleRef.current.remove();
+      }
     };
   }, []);
 
@@ -70,8 +74,64 @@ const Editor = forwardRef(function Editor({ roomId, username, language, onChange
 
     // 4. Awareness — live cursors with username + color
     const awareness = provider.awareness;
-    const color = randomColor({ luminosity: 'dark' });
+    const color = randomColor({ luminosity: 'dark', format: 'hex' });
     awareness.setLocalStateField('user', { name: username, color });
+
+    styleRef.current = document.createElement('style');
+    document.head.appendChild(styleRef.current);
+
+    const updateCursorStyles = () => {
+      let css = `
+        @keyframes cursorLabelFade {
+          0% { opacity: 1; }
+          70% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `;
+      awareness.getStates().forEach((state, clientId) => {
+        if (state.user) {
+          const { color, name } = state.user;
+          const transparentColor = color + '40'; // ~25% opacity
+          css += `
+            .yRemoteSelection-${clientId} {
+              background-color: ${transparentColor};
+            }
+            .yRemoteSelectionHead-${clientId} {
+              position: absolute;
+              border-left: 2px solid ${color};
+              box-sizing: border-box;
+            }
+            .yRemoteSelectionHead-${clientId}::after {
+              content: '${name}';
+              position: absolute;
+              top: -22px;
+              left: -2px;
+              background-color: ${color};
+              color: #fff;
+              font-size: 11px;
+              font-family: inherit;
+              padding: 2px 6px;
+              border-radius: 4px;
+              border-bottom-left-radius: 0;
+              pointer-events: none;
+              white-space: nowrap;
+              z-index: 50;
+              animation: cursorLabelFade 3s forwards;
+            }
+            .yRemoteSelectionHead-${clientId}:hover::after {
+              opacity: 1;
+              animation: none;
+            }
+          `;
+        }
+      });
+      if (styleRef.current) {
+        styleRef.current.innerHTML = css;
+      }
+    };
+
+    awareness.on('change', updateCursorStyles);
+    updateCursorStyles();
 
     // 5. Bind Yjs ↔ Monaco
     const binding = new MonacoBinding(
