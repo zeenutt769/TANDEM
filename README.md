@@ -4,7 +4,7 @@
 
 ### Real-time Collaborative Code Editor
 
-> Code together, in real-time. No lag. No conflict. Just flow.
+> Code together, in real-time. No lag. No conflict. Just go with the flow.
 
 [![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Visit_Now-58a6ff?style=for-the-badge)](https://tandem-editor.vercel.app)
 [![Backend](https://img.shields.io/badge/Backend-Railway-0d1117?style=for-the-badge&logo=railway)](https://tandem-api.railway.app)
