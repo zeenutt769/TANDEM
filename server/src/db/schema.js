@@ -4,9 +4,13 @@
  * Creates the `rooms` table if it does not exist.
  * Safe to call on every server boot (idempotent).
  */
-import sql from './pool.js';
+import sql, { hasDb } from './pool.js';
 
 export async function initDB() {
+  if (!hasDb) {
+    console.log('[DB] In-memory database ready ✅ (No Postgres)');
+    return;
+  }
   await sql`
     CREATE TABLE IF NOT EXISTS rooms (
       room_id    VARCHAR(16)  PRIMARY KEY,

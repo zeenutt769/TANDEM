@@ -13,12 +13,14 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('[DB] DATABASE_URL is not set in server/.env');
+export const hasDb = !!process.env.DATABASE_URL;
+
+if (!hasDb) {
+  console.warn('[DB] WARNING: DATABASE_URL is not set in server/.env. Running with in-memory database fallback.');
 }
 
 // `neon()` returns a tagged-template SQL function.
 // Each call is a fresh HTTP request — no long-lived connection to manage.
-const sql = neon(process.env.DATABASE_URL);
+const sql = hasDb ? neon(process.env.DATABASE_URL) : null;
 
 export default sql;

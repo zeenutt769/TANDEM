@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
-import RoomJoin from './components/RoomJoin.jsx';
+import Lenis from 'lenis';
+import Dashboard from './components/Dashboard.jsx';
 import Editor from './components/Editor.jsx';
 import Toolbar from './components/Toolbar.jsx';
 import UserList from './components/UserList.jsx';
@@ -11,6 +12,26 @@ import { useCodeRunner } from './hooks/useCodeRunner.js';
 import { useRoomPersistence } from './hooks/useRoomPersistence.js';
 
 export default function App() {
+  // Initialize Lenis Smooth Scrolling
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
+
   const [roomId, setRoomId] = useState(null);
   const [username, setUsername] = useState(null);
   const [language, setLanguage] = useState('javascript');
@@ -43,17 +64,62 @@ export default function App() {
   const handleFormat = () => editorRef.current?.formatCode();
   const handleApplySnippet = (snippetText) => editorRef.current?.insertSnippetAtCursor(snippetText);
 
-  const handleJoinRoom = ({ roomId, username }) => {
-    setRoomId(roomId);
-    setUsername(username);
+  const handleLanguageChange = (newLang) => {
+    setLanguage(newLang);
+    // Update language in room history
+    try {
+      const history = JSON.parse(localStorage.getItem('tandem_history') || '[]');
+      const updated = history.map(item => {
+        if (item.roomId === roomId) {
+          return { ...item, language: newLang };
+        }
+        return item;
+      });
+      localStorage.setItem('tandem_history', JSON.stringify(updated));
+    } catch (e) {
+      console.error('Error updating language in history', e);
+    }
+  };
+
+  const handleJoinRoom = ({ roomId: newRoomId, username: newUsername }) => {
+    setRoomId(newRoomId);
+    setUsername(newUsername);
+    
+    // Save to history
+    try {
+      const history = JSON.parse(localStorage.getItem('tandem_history') || '[]');
+      const filtered = history.filter(item => item.roomId !== newRoomId);
+      const updated = [
+        {
+          roomId: newRoomId,
+          username: newUsername,
+          joinedAt: new Date().toISOString(),
+          language: language
+        },
+        ...filtered
+      ].slice(0, 15);
+      localStorage.setItem('tandem_history', JSON.stringify(updated));
+    } catch (e) {
+      console.error('Error saving room to history', e);
+    }
   };
 
   const handleRunCode = () => {
     runCode(code, language);
+    // Log stats
+    try {
+      const stats = JSON.parse(localStorage.getItem('tandem_stats') || '{"executions":0,"languages":{}}');
+      stats.executions = (stats.executions || 0) + 1;
+      if (!stats.languages) stats.languages = {};
+      stats.languages[language] = (stats.languages[language] || 0) + 1;
+      localStorage.setItem('tandem_stats', JSON.stringify(stats));
+    } catch (e) {
+      console.error('Error updating stats', e);
+    }
   };
 
   if (!roomId) {
-    return <RoomJoin onJoin={handleJoinRoom} />;
+    return <Dashboard onJoin={handleJoinRoom} />;
   }
 
   return (
@@ -62,12 +128,13 @@ export default function App() {
       <div style={{ flexShrink: 0, zIndex: 20 }}>
         <Toolbar
           language={language}
-          onLanguageChange={setLanguage}
+          onLanguageChange={handleLanguageChange}
           onRun={handleRunCode}
           onFormat={handleFormat}
           isRunning={isRunning}
           roomId={roomId}
           connected={connected}
+          onExit={() => setRoomId(null)}
         />
       </div>
       
